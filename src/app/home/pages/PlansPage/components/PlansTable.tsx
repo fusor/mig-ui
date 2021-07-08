@@ -30,7 +30,6 @@ interface IPlansTableProps {
   planList: IPlan[];
   addPlanDisabledObj: IAddPlanDisabledObjModel;
   toggleAddWizardOpen: () => void;
-  isRefreshingAnalytic: boolean;
 }
 
 interface IExpandedCells {
@@ -41,7 +40,6 @@ const PlansTable: React.FunctionComponent<IPlansTableProps> = ({
   planList,
   addPlanDisabledObj,
   toggleAddWizardOpen,
-  isRefreshingAnalytic,
 }: IPlansTableProps) => {
   const [expandedCells, setExpandedCells] = useState<IExpandedCells>({});
 
@@ -99,15 +97,6 @@ const PlansTable: React.FunctionComponent<IPlansTableProps> = ({
         namespaceCount,
         isMaxResourcesLimitReached,
       } = getPlanInfo(plan);
-      const isLoadingAnalytic: boolean =
-        // initial loading state to show when a miganalytic is first started or updated.
-        !!(plan?.PlanStatus?.analyticPercentComplete !== 100 && plan.PlanStatus.latestAnalytic) ||
-        // Plan is currenlty being Closed/Deleted
-        plan.PlanStatus.isPlanLocked ||
-        // Analytic is being manually refreshed
-        isRefreshingAnalytic;
-
-      const noMigAnlyticFound: boolean = plan?.Analytics?.length === 0;
 
       return [
         {

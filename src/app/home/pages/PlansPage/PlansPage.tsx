@@ -12,6 +12,9 @@ import {
   Button,
   Bullseye,
   Spinner,
+  SearchInput,
+  Split,
+  SplitItem,
 } from '@patternfly/react-core';
 import AddCircleOIcon from '@patternfly/react-icons/dist/js/icons/add-circle-o-icon';
 import spacing from '@patternfly/react-styles/css/utilities/Spacing/spacing';
@@ -25,6 +28,7 @@ import WizardContainer from './components/Wizard/WizardContainer';
 import AddPlanDisabledTooltip from './components/AddPlanDisabledTooltip';
 import { IAddPlanDisabledObjModel } from './types';
 import { DefaultRootState } from '../../../../configureStore';
+import { IPlan } from '../../../plan/duck/types';
 
 export const PlansPage: React.FunctionComponent = () => {
   const planList = useSelector((state: DefaultRootState) =>
@@ -39,6 +43,21 @@ export const PlansPage: React.FunctionComponent = () => {
   const planState: IPlanReducerState = useSelector((state: DefaultRootState) => state.plan);
 
   const [isAddWizardOpen, toggleAddWizardOpen] = useOpenModal(false);
+  const [searchText, setSearchText] = useState('');
+  const filterPlanList = (items: IPlan[]): IPlan[] =>
+    items
+      .map((item) => {
+        const nameMatches = (item.MigPlan.metadata.name as string)
+          .toLowerCase()
+          .includes(searchText.toLowerCase());
+        return nameMatches ? item : null;
+      })
+      .filter((item) => !!item) as IPlan[];
+
+  let filteredPlanList = planList;
+  if (searchText && planList) {
+    filteredPlanList = filterPlanList(planList);
+  }
 
   const [addPlanDisabledObj, setAddPlanDisabledObj] = useState<IAddPlanDisabledObjModel>({
     isAddPlanDisabled: true,
@@ -109,12 +128,24 @@ export const PlansPage: React.FunctionComponent = () => {
                   </AddPlanDisabledTooltip>
                 </EmptyState>
               ) : (
-                <PlansTable
-                  planList={planList}
-                  addPlanDisabledObj={addPlanDisabledObj}
-                  toggleAddWizardOpen={toggleAddWizardOpen}
-                  isRefreshingAnalytic={planState.isRefreshingAnalytic}
-                />
+                <CardBody>
+                  <Split hasGutter>
+                    <SplitItem isFilled>
+                      <SearchInput
+                        placeholder="Type to search"
+                        value={searchText}
+                        onChange={setSearchText}
+                        onClear={() => setSearchText('')}
+                        className={`${spacing.mbMd}`}
+                      />
+                    </SplitItem>
+                  </Split>
+                  <PlansTable
+                    planList={filteredPlanList}
+                    addPlanDisabledObj={addPlanDisabledObj}
+                    toggleAddWizardOpen={toggleAddWizardOpen}
+                  />
+                </CardBody>
               )}
               <WizardContainer
                 planList={planList}
