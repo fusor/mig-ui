@@ -9,15 +9,11 @@ import {
 } from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { flatten } from 'lodash';
-import {
-  IPlanLogSources,
-  IPodLogSource,
-  IPodContainer,
-} from '../../../../../client/resources/discovery';
 import { ILogSource, LogUnselected } from './LogsContainer';
 import SimpleSelect from '../../../../common/components/SimpleSelect';
 import { DefaultRootState } from '../../../../../configureStore';
 import { logsFetchRequest } from '../../../../logs/duck/slice';
+import { IPodContainer, IPodLogSource } from '@konveyor/lib-ui';
 
 interface ISelectItem {
   label: any;

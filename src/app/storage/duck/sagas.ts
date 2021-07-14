@@ -10,10 +10,6 @@ import {
   SimpleEffect,
   Effect,
 } from 'redux-saga/effects';
-import { ClientFactory } from '../../../client/client_factory';
-import { IClusterClient } from '../../../client/client';
-import { MigResource, MigResourceKind } from '../../../client/resources';
-import { CoreNamespacedResource, CoreNamespacedResourceKind } from '../../../client/resources';
 import {
   createStorageSecret,
   createMigStorage,
@@ -38,10 +34,17 @@ import { alertSuccessTimeout, alertErrorTimeout } from '../../common/duck/slice'
 import { DefaultRootState } from '../../../configureStore';
 import { IStorage } from './types';
 import { ICondition } from '../../plan/duck/types';
+import {
+  ClientFactory,
+  CoreNamespacedResource,
+  CoreNamespacedResourceKind,
+  IClusterClient,
+} from '@konveyor/lib-ui';
+import { MigResource, MigResourceKind } from '../../../client/helpers';
 
 function fetchMigStorageRefs(
   client: IClusterClient,
-  migStorages: IMigStorage[]
+  migStorages: Array<IMigStorage>
 ): Array<Promise<any>> {
   const refs: Array<Promise<any>> = [];
 
@@ -77,7 +80,7 @@ function groupStorages(migStorages: any[], refs: any[]): any[] {
 
 function* fetchStorageGenerator(): Generator<any, any, any> {
   const state: DefaultRootState = yield select();
-  const client: IClusterClient = ClientFactory.cluster(state);
+  const client: IClusterClient = ClientFactory.cluster(state.auth.user, '/cluster-api');
   const resource = new MigResource(MigResourceKind.MigStorage, state.auth.migMeta.namespace);
   try {
     let storageList = yield client.list(resource);
@@ -94,8 +97,8 @@ function* removeStorageSaga(action: any): Generator<any, any, any> {
   try {
     const state: DefaultRootState = yield select();
     const { migMeta } = state.auth;
+    const client: IClusterClient = ClientFactory.cluster(state.auth.user, '/cluster-api');
     const { name } = action;
-    const client: IClusterClient = ClientFactory.cluster(state);
 
     const secretResource = new CoreNamespacedResource(
       CoreNamespacedResourceKind.Secret,
@@ -127,8 +130,8 @@ function* removeStorageSaga(action: any): Generator<any, any, any> {
 function* addStorageRequest(action: any): Generator<any, any, any> {
   const state: DefaultRootState = yield select();
   const { migMeta } = state.auth;
+  const client: IClusterClient = ClientFactory.cluster(state.auth.user, '/cluster-api');
   const { storageValues } = action;
-  const client: IClusterClient = ClientFactory.cluster(state);
 
   const storageSecret = createStorageSecret(
     storageValues.name,
@@ -244,8 +247,8 @@ function* updateStorageRequest(action: any): Generator<any, any, any> {
   // TODO: Probably need rollback logic here too if any fail
   const state: DefaultRootState = yield select();
   const { migMeta } = state.auth;
+  const client: IClusterClient = ClientFactory.cluster(state.auth.user, '/cluster-api');
   const { storageValues } = action;
-  const client: IClusterClient = ClientFactory.cluster(state);
 
   const currentStorage = state.storage.migStorageList.find((c) => {
     return c.MigStorage.metadata.name === storageValues.name;
@@ -430,9 +433,9 @@ function* pollStorageAddEditStatus(action: any): Generator<any, any, any> {
     try {
       const state: DefaultRootState = yield select();
       const { migMeta } = state.auth;
+      const client: IClusterClient = ClientFactory.cluster(state.auth.user, '/cluster-api');
       const { storageName } = action;
 
-      const client: IClusterClient = ClientFactory.cluster(state);
       const migStorageResource = new MigResource(MigResourceKind.MigStorage, migMeta.namespace);
       const storagePollResult = yield client.get(migStorageResource, storageName);
 

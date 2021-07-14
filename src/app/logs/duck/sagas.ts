@@ -1,23 +1,18 @@
-import { select, call, put, take, takeEvery, all, StrictEffect } from 'redux-saga/effects';
-import { ClientFactory } from '../../../client/client_factory';
+import { select, put, takeEvery, all, StrictEffect } from 'redux-saga/effects';
 import { flatten } from 'lodash';
-import { IDiscoveryClient } from '../../../client/discoveryClient';
 import {
   PlanPodReportDiscovery,
   ClusterKind,
   IPlanLogSources,
   IPlanReport,
-  ClusterPodReportDiscovery,
+  IPodCollectorDiscoveryResource,
+  PodCollectorDiscoveryResource,
 } from '../../../client/resources/discovery';
 import JSZip from 'jszip';
 import utils from '../../common/duck/utils';
 import { handleCertError } from './utils';
 import { alertErrorTimeout } from '../../common/duck/slice';
 import { DefaultRootState } from '../../../configureStore';
-import {
-  IPodCollectorDiscoveryResource,
-  PodCollectorDiscoveryResource,
-} from '../../../client/resources/common';
 import {
   clusterPodFetchFailure,
   clusterPodFetchRequest,
@@ -37,6 +32,9 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { useSelector } from 'react-redux';
 import { planSelectors } from '../../plan/duck';
 import { ICluster, IMigCluster } from '../../cluster/duck/types';
+import { ClientFactory } from '@konveyor/lib-ui';
+import { IDiscoveryClient } from '../../../client/discoveryClient';
+import { DiscoveryFactory } from '../../../client/discovery_factory';
 
 function* getState(): Generator<StrictEffect, DefaultRootState, DefaultRootState> {
   const res: DefaultRootState = yield select();
@@ -49,7 +47,11 @@ const logIndex = 8;
 function* downloadLog(action: any): Generator<any, any, any> {
   const state = yield* getState();
   //NATODO: add cluster name to request
-  const discoveryClient: IDiscoveryClient = ClientFactory.discovery(state);
+  const discoveryClient: IDiscoveryClient = DiscoveryFactory.discovery(
+    state.auth.user,
+    state.auth.migMeta.namespace,
+    '/discovery-api'
+  );
   const logPath: string = action.payload;
   try {
     const archive = new JSZip();
@@ -71,7 +73,11 @@ function* downloadLog(action: any): Generator<any, any, any> {
 function* downloadLogs(action: any): Generator<any, any, any> {
   const state = yield* getState();
   //NATODO: add cluster name to request
-  const discoveryClient: IDiscoveryClient = ClientFactory.discovery(state);
+  const discoveryClient: IDiscoveryClient = DiscoveryFactory.discovery(
+    state.auth.user,
+    state.auth.migMeta.namespace,
+    '/discovery-api'
+  );
   const report: IPlanLogSources = action.payload;
   try {
     const archive = new JSZip();
@@ -103,7 +109,11 @@ function* downloadLogs(action: any): Generator<any, any, any> {
 function* extractLogs(action: any): Generator<any, any, any> {
   const state = yield* getState();
   //NATODO: add cluster name to request
-  const discoveryClient: IDiscoveryClient = ClientFactory.discovery(state);
+  const discoveryClient: IDiscoveryClient = DiscoveryFactory.discovery(
+    state.auth.user,
+    state.auth.migMeta.namespace,
+    '/discovery-api'
+  );
   const logPath = action.payload;
   try {
     const log = yield discoveryClient.getRaw(logPath);
@@ -123,7 +133,11 @@ function* collectReport(action: PayloadAction<string>) {
   const planName = action.payload;
   const state: DefaultRootState = yield select();
   //NATODO: add cluster name to request
-  const discoveryClient: IDiscoveryClient = ClientFactory.discovery(state);
+  const discoveryClient: IDiscoveryClient = DiscoveryFactory.discovery(
+    state.auth.user,
+    state.auth.migMeta.namespace,
+    '/discovery-api'
+  );
   const planPodReportDiscovery = new PlanPodReportDiscovery(planName);
   try {
     const planReport: IPlanReport = yield planPodReportDiscovery.get(discoveryClient);
@@ -146,7 +160,11 @@ function* collectReport(action: PayloadAction<string>) {
 
 function* fetchPodNames(action: PayloadAction<string>): Generator<any, any, any> {
   const state: DefaultRootState = yield select();
-  const discoveryClient: IDiscoveryClient = ClientFactory.discovery(state);
+  const discoveryClient: IDiscoveryClient = DiscoveryFactory.discovery(
+    state.auth.user,
+    state.auth.migMeta.namespace,
+    state.auth.migMeta.discoveryApi
+  );
 
   const planName = action.payload;
   const currentPlan = state.plan.migPlanList.find(

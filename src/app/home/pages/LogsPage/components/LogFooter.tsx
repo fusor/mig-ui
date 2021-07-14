@@ -3,7 +3,6 @@ import { Button, CardFooter, Grid, GridItem } from '@patternfly/react-core';
 import { FunctionComponent } from 'react';
 import { connect } from 'react-redux';
 import { LogUnselected, ILogSource } from './LogsContainer';
-import { IPlanLogSources } from '../../../../../client/resources/discovery';
 import { DefaultRootState } from '../../../../../configureStore';
 import { reportFetchRequest, requestDownloadLog } from '../../../../logs/duck/slice';
 

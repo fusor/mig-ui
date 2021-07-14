@@ -180,7 +180,7 @@ const webpackConfig = {
     proxy: [
       {
         // NOTE: Any future backend-only routes added to deploy/main.js need to be listed here:
-        context: ['/login', '/login/callback'],
+        context: ['/login', '/login/callback', '/cluster-api', '/discovery-api'],
         target: `http://localhost:${EXPRESS_PORT}`,
       },
     ],

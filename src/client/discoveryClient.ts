@@ -1,12 +1,21 @@
-import axios, { AxiosInstance, ResponseType } from 'axios';
-import { IDiscoveryResource, IDiscoveryParameters, OAuthClient } from './resources/common';
+import { OAuthClient } from './resources/common';
+
+import type { AxiosStatic, AxiosInstance, ResponseType } from 'axios';
+import { IDiscoveryParameters, IDiscoveryResource } from './resources/discovery';
+
+let axios: AxiosStatic;
+try {
+  axios = require('axios');
+  // eslint-disable-next-line no-empty
+} catch (e) {}
 
 export interface IDiscoveryClient {
+  // eslint-disable-next-line @typescript-eslint/ban-types
   get(resource: IDiscoveryResource, params?: object): Promise<any>;
   getRaw(path: string): Promise<any>;
   apiRoot(): string;
   rootNamespace(): string;
-  setTokenExpiryHandler: (TokenExpiryHandler: any, number: number) => void;
+  setTokenExpiryHandler: (TokenExpiryHandler: any, number: any) => void;
 }
 
 export class DiscoveryClient extends OAuthClient implements IDiscoveryClient {
@@ -33,11 +42,11 @@ export class DiscoveryClient extends OAuthClient implements IDiscoveryClient {
     });
   }
 
-  public rootNamespace() {
+  public rootNamespace(): string {
     return ['namespaces', this._discoveryNamespace].join('/');
   }
 
-  public apiRoot() {
+  public apiRoot(): string {
     return [this._discoveryApi, this.rootNamespace()].join('/');
   }
 
@@ -46,7 +55,7 @@ export class DiscoveryClient extends OAuthClient implements IDiscoveryClient {
   }
 
   public get = (resource: IDiscoveryResource, params?: IDiscoveryParameters): Promise<any> => {
-    if (params) {
+    if (params && resource.parametrized) {
       return this._get(this.fullPath(resource.path()), resource?.parametrized(params));
     } else {
       return this._get(this.fullPath(resource.path()));

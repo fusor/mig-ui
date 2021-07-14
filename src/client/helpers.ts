@@ -1,4 +1,4 @@
-import { NamespacedResource, IGroupVersionKindPlural } from './common';
+import { NamespacedResource, IGroupVersionKindPlural } from '@konveyor/lib-ui';
 
 export class MigResource extends NamespacedResource {
   private _gvk: IGroupVersionKindPlural;

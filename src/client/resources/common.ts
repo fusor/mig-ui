@@ -5,38 +5,10 @@ export interface IKubeResource {
   namedPath(name: string): string;
 }
 
-export interface IPodCollectorDiscoveryResource {
-  discoveryAggregator(): string;
-  discoveryType(): string;
-  path(): string;
-}
-
-export interface IDebugTreeResource {
-  discoveryAggregator(): string;
-  discoveryType(): string;
-  path(): string;
-}
-export interface IDiscoveryResource {
-  discoveryAggregator(): string;
-  discoveryType(): string;
-  path(): string;
-  parametrized?(params: IDiscoveryParameters): { [param: string]: string };
-}
-
-export interface INamedDiscoveryResource extends IDiscoveryResource {
-  discoveryName(): string;
-}
-
 export interface IGroupVersionKindPlural {
   group: string;
   version: string;
   kindPlural: string;
-}
-
-export interface IDiscoveryParameters {
-  offset?: number;
-  limit?: number;
-  [param: string]: string | number;
 }
 
 export type TokenExpiryHandler = (oldToken: object) => void;
@@ -81,75 +53,6 @@ export abstract class ClusterResource implements IKubeResource {
   }
 }
 
-export abstract class DiscoveryResource implements IDiscoveryResource {
-  private readonly _type: string;
-  private readonly _aggregatorType: string;
-  private readonly _aggregatorName: string;
-  private _discoveryParameters: IDiscoveryParameters;
-
-  constructor(
-    aggregatorName: string,
-    type: string,
-    discoveryParameters: IDiscoveryParameters,
-    customAggregatorType = 'clusters'
-  ) {
-    this._aggregatorType = customAggregatorType;
-    this._aggregatorName = aggregatorName;
-    this._type = type;
-    this._discoveryParameters = discoveryParameters;
-  }
-
-  public discoveryType() {
-    return this._type;
-  }
-
-  public discoveryAggregator() {
-    return [this._aggregatorType, this._aggregatorName].join('/');
-  }
-
-  public parametrized(params: IDiscoveryParameters = {}) {
-    const merged = {} as any;
-    Object.keys(this._discoveryParameters).map(
-      (param) => (merged[param] = this._discoveryParameters[param].toString())
-    );
-    Object.keys(params).map(
-      (param) => (merged[param] = this._discoveryParameters[param].toString())
-    );
-    return merged;
-  }
-
-  public path(): string {
-    return [this.discoveryAggregator(), this.discoveryType()].join('/');
-  }
-}
-
-export abstract class NamedDiscoveryResource
-  extends DiscoveryResource
-  implements INamedDiscoveryResource
-{
-  private readonly _name: string;
-
-  constructor(
-    name: string,
-    aggregator: string,
-    type: string,
-    discoveryParameters: IDiscoveryParameters,
-    customAggregatorType = 'clusters'
-  ) {
-    super(aggregator, type, discoveryParameters, customAggregatorType);
-
-    this._name = name;
-  }
-
-  public discoveryName() {
-    return this._name;
-  }
-
-  public path(): string {
-    return [super.path(), this.discoveryName()].join('/');
-  }
-}
-
 export abstract class OAuthClient {
   private _token: string;
   private _tokenExpiryTime: number;
@@ -181,48 +84,5 @@ export abstract class OAuthClient {
       token: this._token,
       tokenExpiryTime: this._tokenExpiryTime,
     };
-  }
-}
-
-export class DebugTreeDiscoveryResource implements IDebugTreeResource {
-  private readonly _aggregatorType: string;
-  private readonly _aggregatorName: string;
-  private readonly _aggregatorSpecifier: string;
-
-  constructor(planName: string, migrationName: string, treeType = 'plans') {
-    this._aggregatorType = treeType;
-    this._aggregatorName = planName;
-    this._aggregatorSpecifier = migrationName;
-  }
-
-  public discoveryType() {
-    return 'tree';
-  }
-
-  public discoveryAggregator() {
-    return [this._aggregatorType, this._aggregatorName].join('/');
-  }
-
-  public path(): string {
-    return [this.discoveryAggregator(), this.discoveryType(), this._aggregatorSpecifier].join('/');
-  }
-}
-
-export class PodCollectorDiscoveryResource implements IPodCollectorDiscoveryResource {
-  private readonly _clusterName: string;
-
-  constructor(clusterName: string) {
-    this._clusterName = clusterName;
-  }
-  public discoveryType() {
-    return 'clusters';
-  }
-
-  public discoveryAggregator() {
-    return 'namespaces/openshift-migration/pods';
-  }
-
-  public path(): string {
-    return [this.discoveryType(), this._clusterName, this.discoveryAggregator()].join('/');
   }
 }

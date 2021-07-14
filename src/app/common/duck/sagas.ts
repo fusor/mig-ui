@@ -38,7 +38,7 @@ function* poll(action: any): Generator<any, any, any> {
       const migMeta = state.auth.migMeta;
       //handle selfSignedCert error & network connectivity error
       if (utils.isSelfSignedCertError(err)) {
-        const oauthMetaUrl = `${migMeta.clusterApi}/.well-known/oauth-authorization-server`;
+        const oauthMetaUrl = `cluster-api/.well-known/oauth-authorization-server`;
         const alertModalObj: IAlertModalObj = {
           name: params.pollName,
           errorMessage: 'error',

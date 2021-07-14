@@ -4,6 +4,7 @@ const dayjs = require('dayjs');
 const compression = require('compression');
 const HttpsProxyAgent = require('https-proxy-agent');
 const { AuthorizationCode } = require('simple-oauth2');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 let cachedOAuthMeta = null;
 
@@ -26,6 +27,61 @@ const sanitizeMigMeta = (migMeta) => {
 const sanitizedMigMeta = sanitizeMigMeta(migMeta);
 
 const encodedMigMeta = Buffer.from(JSON.stringify(sanitizedMigMeta)).toString('base64');
+
+/** reverse proxy middleware configuration
+ *
+ */
+
+//  if (process.env['DATA_SOURCE'] !== 'mock') {
+let clusterApiProxyOptions = {
+  target: migMeta.clusterApi,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/cluster-api/': '/',
+  },
+  logLevel: process.env.DEBUG ? 'debug' : 'info',
+  secure: false,
+};
+
+let discoveryApiProxyOptions = {
+  target: migMeta.discoveryApi,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/discovery-api/': '/',
+  },
+  logLevel: process.env.DEBUG ? 'debug' : 'info',
+  secure: false,
+};
+
+/* TODO restore this when https://github.com/konveyor/forklift-ui/issues/281 is settled
+  let inventoryPayloadApiProxyOptions = {
+    target: meta.inventoryPayloadApi,
+    changeOrigin: true,
+    pathRewrite: {
+      '^/inventory-payload-api/': '/',
+    },
+    logLevel: process.env.DEBUG ? 'debug' : 'info',
+  };
+  */
+
+if (process.env['NODE_ENV'] === 'development') {
+  clusterApiProxyOptions = {
+    ...clusterApiProxyOptions,
+    secure: false,
+  };
+
+  discoveryApiProxyOptions = {
+    ...discoveryApiProxyOptions,
+    secure: false,
+  };
+}
+
+const clusterApiProxy = createProxyMiddleware(clusterApiProxyOptions);
+const discoveryApiProxy = createProxyMiddleware(discoveryApiProxyOptions);
+
+/** proxy middleware configuration
+ *
+ */
 
 //Set proxy string if it exists
 const proxyString = process.env['HTTPS_PROXY'] || process.env['HTTP_PROXY'];
@@ -59,6 +115,9 @@ app.use(compression());
 app.engine('ejs', require('ejs').renderFile);
 app.set('views', viewsDir);
 app.use(express.static(staticDir));
+//** proxy configuration */
+app.use('/cluster-api/', clusterApiProxy);
+app.use('/discovery-api/', discoveryApiProxy);
 
 // NOTE: Any future backend-only routes here need to also be proxied by webpack dev server (Now `webpack serve` as of webpack version 5).
 //       Add them to config/webpack.dev.js in the array under devServer.proxy.context.

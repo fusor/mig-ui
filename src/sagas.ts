@@ -6,7 +6,8 @@ import planSagas from './app/plan/duck/sagas';
 import logSagas from './app/logs/duck/sagas';
 import clusterSagas from './app/cluster/duck/sagas';
 import storageSagas from './app/storage/duck/sagas';
-import { setTokenExpiryHandler } from './client/client_factory';
+import { setTokenExpiryHandler } from '@konveyor/lib-ui';
+
 import { ClusterActions } from './app/cluster/duck/actions';
 import { initFromStorage, initMigMeta } from './app/auth/duck/slice';
 
